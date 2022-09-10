@@ -1,7 +1,9 @@
 package de.heuerleon.whatsflat.api.controller
 
+import de.heuerleon.whatsflat.api.model.AuthUser
 import de.heuerleon.whatsflat.api.model.User
 import de.heuerleon.whatsflat.api.repository.UserRepository
+import org.mindrot.jbcrypt.BCrypt
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -22,8 +24,11 @@ class UserController(private val userRepository: UserRepository) {
         userRepository.findAll()
 
     @PostMapping("/users")
-    fun createNewUser(@RequestBody user: User): User =
-        userRepository.save(user)
+    fun createNewUser(@RequestBody user: User): ResponseEntity<User> {
+        val passwordHash = BCrypt.hashpw(user.password, BCrypt.gensalt())
+        user.password = passwordHash
+        return ResponseEntity.ok().body(userRepository.save(user))
+    }
 
     @GetMapping("/users/{id}")
     fun getUserById(@PathVariable(value = "id") userId: Long): ResponseEntity<User> {
@@ -35,7 +40,8 @@ class UserController(private val userRepository: UserRepository) {
     @PutMapping("/users/{id}")
     fun updateUserById(@PathVariable(value = "id") userId: Long, @RequestBody user: User): ResponseEntity<User> {
         return userRepository.findById(userId).map { oldUser ->
-            val updatedUser = oldUser.copy(username = user.username, password = user.password)
+            val passwordHash = BCrypt.hashpw(user.password, BCrypt.gensalt())
+            val updatedUser = oldUser.copy(username = user.username, password = passwordHash)
             ResponseEntity.ok().body(userRepository.save(updatedUser))
         }.orElse(ResponseEntity.notFound().build())
     }
@@ -45,6 +51,14 @@ class UserController(private val userRepository: UserRepository) {
         return userRepository.findById(userId).map { user ->
             userRepository.delete(user)
             ResponseEntity<Void>(HttpStatus.OK)
+        }.orElse(ResponseEntity.notFound().build())
+    }
+
+    @GetMapping("/users/match_pw")
+    fun matchUserPassword(@RequestBody authUser: AuthUser) : ResponseEntity<Boolean> {
+        return userRepository.findById(authUser.id).map { user ->
+            val check = BCrypt.checkpw(authUser.password, user.password)
+            ResponseEntity.ok().body(check)
         }.orElse(ResponseEntity.notFound().build())
     }
 

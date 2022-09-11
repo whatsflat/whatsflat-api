@@ -1,19 +1,21 @@
 package de.heuerleon.whatsflat.api.model
 
 import org.hibernate.Hibernate
+import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "users")
-data class User(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) val id : Long = 0,
-    var username : String,
-    var password : String
-) {
+@Table(name = "groups")
+data class Group(
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) val id: Long = 0,
+    val name: String,
+    val created: Timestamp,
+    val owner: Long
+    ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
-        other as User
+        other as Group
 
         return id == other.id
     }
@@ -22,6 +24,6 @@ data class User(
 
     @Override
     override fun toString(): String {
-        return this::class.simpleName + "(id = $id , username = $username , password = $password )"
+        return this::class.simpleName + "(id = $id , name = $name , created = $created , owner = $owner )"
     }
 }

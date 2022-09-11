@@ -2,4 +2,4 @@
 cd build/libs/ || exit
 
 JAR=$(find . -name "*.jar")
-java -jar "$JAR"
+screen -AdmS whatsflat-server java -jar "$JAR"

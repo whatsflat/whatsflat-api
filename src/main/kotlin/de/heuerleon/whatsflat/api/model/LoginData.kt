@@ -1,6 +1,6 @@
 package de.heuerleon.whatsflat.api.model
 
-data class AuthUser (
-    val id: Long,
+data class LoginData (
+    val username: String,
     val password: String
     )

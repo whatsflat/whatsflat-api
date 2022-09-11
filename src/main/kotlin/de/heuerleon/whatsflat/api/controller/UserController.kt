@@ -1,6 +1,6 @@
 package de.heuerleon.whatsflat.api.controller
 
-import de.heuerleon.whatsflat.api.model.AuthUser
+import de.heuerleon.whatsflat.api.model.LoginData
 import de.heuerleon.whatsflat.api.model.User
 import de.heuerleon.whatsflat.api.repository.UserRepository
 import org.mindrot.jbcrypt.BCrypt
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/whatsflat")
 class UserController(private val userRepository: UserRepository) {
 
     @GetMapping("/users")
@@ -54,12 +54,12 @@ class UserController(private val userRepository: UserRepository) {
         }.orElse(ResponseEntity.notFound().build())
     }
 
-    @GetMapping("/users/match_pw")
-    fun matchUserPassword(@RequestBody authUser: AuthUser) : ResponseEntity<Boolean> {
-        return userRepository.findById(authUser.id).map { user ->
-            val check = BCrypt.checkpw(authUser.password, user.password)
+    @GetMapping("/users/try_login")
+    fun tryLogin(@RequestBody loginData: LoginData) : ResponseEntity<Boolean> {
+        return userRepository.findByUsername(loginData.username).map { user ->
+            val check = BCrypt.checkpw(loginData.password, user.password)
             ResponseEntity.ok().body(check)
-        }.orElse(ResponseEntity.notFound().build())
+        }.orElse(ResponseEntity.ok().body(false))
     }
 
 }

@@ -25,14 +25,25 @@ class UserController(private val userRepository: UserRepository) {
 
     @PostMapping("/users")
     fun createNewUser(@RequestBody user: User): ResponseEntity<User> {
-        val passwordHash = BCrypt.hashpw(user.password, BCrypt.gensalt())
-        user.password = passwordHash
-        return ResponseEntity.ok().body(userRepository.save(user))
+        return userRepository.findByUsername(user.username).map {
+            ResponseEntity<User>(HttpStatus.CONFLICT)
+        }.orElseGet {
+            val passwordHash = BCrypt.hashpw(user.password, BCrypt.gensalt())
+            user.password = passwordHash
+            ResponseEntity.ok().body(userRepository.save(user))
+        }
     }
 
     @GetMapping("/users/{id}")
     fun getUserById(@PathVariable(value = "id") userId: Long): ResponseEntity<User> {
         return userRepository.findById(userId).map { user ->
+            ResponseEntity.ok(user)
+        }.orElse(ResponseEntity.notFound().build())
+    }
+
+    @GetMapping("/users/{username}")
+    fun getUserByUsername(@PathVariable(value = "username") username: String): ResponseEntity<User> {
+        return userRepository.findByUsername(username).map { user ->
             ResponseEntity.ok(user)
         }.orElse(ResponseEntity.notFound().build())
     }
@@ -54,7 +65,7 @@ class UserController(private val userRepository: UserRepository) {
         }.orElse(ResponseEntity.notFound().build())
     }
 
-    @GetMapping("/users/try_login")
+    @PostMapping("/users/try_login")
     fun tryLogin(@RequestBody loginData: LoginData) : ResponseEntity<Boolean> {
         return userRepository.findByUsername(loginData.username).map { user ->
             val check = BCrypt.checkpw(loginData.password, user.password)
